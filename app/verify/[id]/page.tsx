@@ -3,10 +3,13 @@ import DocumentSubmissionPortal from '@/components/DocumentSubmissionPortal';
 
 export default async function VerifyPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ name?: string }>;
 }) {
   const { id } = await params;
+  const { name } = await searchParams;
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900 via-slate-900 to-black flex items-center justify-center p-4 sm:p-8 bg-fixed overflow-x-hidden text-white">
@@ -25,7 +28,7 @@ export default async function VerifyPage({
           {/* Top aesthetic bar */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"></div>
           
-          <DocumentSubmissionPortal id={id} />
+          <DocumentSubmissionPortal id={id} userName={name} />
         </div>
 
         {/* Footer info */}
