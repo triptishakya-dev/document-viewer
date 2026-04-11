@@ -88,7 +88,7 @@ const Page = () => {
             <form onSubmit={handleRegister} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-300 block ml-1" htmlFor="name">
-                  Full Name
+                  project name
                 </label>
                 <input
                   id="name"
@@ -98,7 +98,7 @@ const Page = () => {
                   value={formData.name}
                   onChange={handleChange}
                   className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-200"
-                  placeholder="Enter your name"
+                  placeholder="Enter project name"
                 />
               </div>
 
