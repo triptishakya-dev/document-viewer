@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     // Generate a unique random ID for the link
     const uniqueId = crypto.randomUUID();
-    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify/${uniqueId}`;
+    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify/${uniqueId}?name=${encodeURIComponent(name)}`;
 
     const { data, error } = await resend.emails.send({
       from: 'Document Viewer <onboarding@resend.dev>',
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       subject: 'Your Access Link',
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">
-          <h2 style="color: #1e293b;">Hello ${name || 'there'}!</h2>
+          <h2 style="color: #1e293b;">Analyzer: ${name || 'PDF Analyzer'}</h2>
           <p style="color: #475569; line-height: 1.6;">
             Thank you for requesting access. Click the button below to proceed to your document viewer:
           </p>
