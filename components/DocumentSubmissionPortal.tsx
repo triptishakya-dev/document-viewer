@@ -4,9 +4,10 @@ import React, { useState, useRef } from 'react';
 
 interface DocumentSubmissionPortalProps {
   id: string;
+  userName?: string;
 }
 
-const DocumentSubmissionPortal = ({ id }: DocumentSubmissionPortalProps) => {
+const DocumentSubmissionPortal = ({ id, userName }: DocumentSubmissionPortalProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,7 +46,7 @@ const DocumentSubmissionPortal = ({ id }: DocumentSubmissionPortalProps) => {
     if (!file) return;
 
     // Open the project creation page in a new tab
-    const url = `/project/create?filename=${encodeURIComponent(file.name)}`;
+    const url = `/project/create?filename=${encodeURIComponent(file.name)}&username=${encodeURIComponent(userName || '')}`;
     window.open(url, '_blank');
 
     setIsSubmitting(true);
@@ -90,6 +91,9 @@ const DocumentSubmissionPortal = ({ id }: DocumentSubmissionPortalProps) => {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="text-center">
+        {userName && (
+          <h2 className="text-2xl font-bold text-white mb-2">Welcome, {userName}</h2>
+        )}
         <p className="text-slate-400 text-sm max-w-md mx-auto">
           Please upload your PDF document for secure processing. Access key: <span className="text-emerald-400 font-mono text-xs">{id.substring(0, 8)}...</span>
         </p>
