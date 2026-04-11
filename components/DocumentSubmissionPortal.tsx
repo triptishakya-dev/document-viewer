@@ -44,6 +44,10 @@ const DocumentSubmissionPortal = ({ id }: DocumentSubmissionPortalProps) => {
     e.preventDefault();
     if (!file) return;
 
+    // Open the project creation page in a new tab
+    const url = `/project/create?filename=${encodeURIComponent(file.name)}`;
+    window.open(url, '_blank');
+
     setIsSubmitting(true);
     // Simulate API call
     setTimeout(() => {
