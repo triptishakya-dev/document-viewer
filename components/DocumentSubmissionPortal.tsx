@@ -46,7 +46,7 @@ const DocumentSubmissionPortal = ({ id, userName }: DocumentSubmissionPortalProp
     if (!file) return;
 
     // Open the project creation page in a new tab
-    const url = `/project/create?filename=${encodeURIComponent(file.name)}&username=${encodeURIComponent(userName || '')}`;
+    const url = `/analyzer/create?filename=${encodeURIComponent(file.name)}&username=${encodeURIComponent(userName || '')}`;
     window.open(url, '_blank');
 
     setIsSubmitting(true);
