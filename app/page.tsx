@@ -7,6 +7,7 @@ const Page = () => {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -15,6 +16,12 @@ const Page = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setIsSuccess(false);
+
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match. Please enter your valid password again.');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/send-link', {
@@ -25,6 +32,7 @@ const Page = () => {
         body: JSON.stringify({
           email: formData.email,
           name: formData.name,
+          password: formData.password,
         }),
       });
 
@@ -32,7 +40,7 @@ const Page = () => {
 
       if (response.ok) {
         setIsSuccess(true);
-        setFormData({ name: '', email: '', password: '' });
+        setFormData({ name: '', email: '', password: '', confirmPassword: '' });
       } else {
         alert(data.error || 'Failed to send email. Please try again.');
       }
@@ -128,6 +136,22 @@ const Page = () => {
                   type="password"
                   required
                   value={formData.password}
+                  onChange={handleChange}
+                  className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-200"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300 block ml-1" htmlFor="confirmPassword">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  value={formData.confirmPassword}
                   onChange={handleChange}
                   className="w-full bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-200"
                   placeholder="••••••••"
