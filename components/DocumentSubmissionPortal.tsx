@@ -5,9 +5,10 @@ import React, { useState, useRef } from 'react';
 interface DocumentSubmissionPortalProps {
   id: string;
   userName?: string;
+  password?: string;
 }
 
-const DocumentSubmissionPortal = ({ id, userName }: DocumentSubmissionPortalProps) => {
+const DocumentSubmissionPortal = ({ id, userName, password }: DocumentSubmissionPortalProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,10 +44,30 @@ const DocumentSubmissionPortal = ({ id, userName }: DocumentSubmissionPortalProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return;
+    // Upload the PDF to the server
+    let fileUrl = '';
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      if (response.ok) {
+        fileUrl = data.url;
+      } else {
+        throw new Error(data.error || 'Upload failed');
+      }
+    } catch (err) {
+      console.error('Failed to upload PDF:', err);
+      alert('Failed to upload the document. Progressing with local fallback...');
+    }
 
     // Open the project creation page in a new tab
-    const url = `/analyzer/create?filename=${encodeURIComponent(file.name)}&username=${encodeURIComponent(userName || '')}`;
+    const url = `/analyzer/create?filename=${encodeURIComponent(file.name)}&username=${encodeURIComponent(userName || '')}&fileUrl=${encodeURIComponent(fileUrl)}&password=${encodeURIComponent(password || '')}`;
     window.open(url, '_blank');
 
     setIsSubmitting(true);
