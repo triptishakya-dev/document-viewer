@@ -140,6 +140,19 @@ const CreateAnalyzerContent = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
                   </a>
+
+                  {/* Next Button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={() => window.open(`/analyzer/slides?fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}`, '_blank')}
+                      className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-900/20 active:scale-[0.98] flex items-center justify-center space-x-2 group"
+                    >
+                      <span className="text-sm uppercase tracking-[0.2em]">NEXT</span>
+                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
