@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_EMAIL_API_KEY);
 
 export async function POST(request: Request) {
   try {
-    const { email, name } = await request.json();
+    const { email, name, password } = await request.json();
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     // Generate a unique random ID for the link
     const uniqueId = crypto.randomUUID();
-    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify/${uniqueId}?name=${encodeURIComponent(name)}`;
+    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify/${uniqueId}?name=${encodeURIComponent(name)}&password=${encodeURIComponent(password)}`;
 
     const { data, error } = await resend.emails.send({
       from: 'Document Viewer <onboarding@resend.dev>',
