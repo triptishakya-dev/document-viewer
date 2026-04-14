@@ -34,7 +34,7 @@ const SlidesContent = () => {
   };
 
   const handleNext = () => {
-    window.open(`/analyzer/view?part=2&fileUrl=${encodeURIComponent(fileUrl)}&username=${encodeURIComponent(username)}&filename=${encodeURIComponent(filename)}`, '_blank');
+    channelRef.current?.postMessage({ type: 'next' });
   };
 
   const projectName = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
