@@ -1,8 +1,53 @@
 "use client";
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const SlidesContent = () => {
+  const searchParams = useSearchParams();
+  const fileUrl = searchParams.get('fileUrl') || '';
+  const username = searchParams.get('username') || '';
+  const filename = searchParams.get('filename') || '';
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const presentWindowRef = useRef<Window | null>(null);
+
+  useEffect(() => {
+    channelRef.current = new BroadcastChannel('pdf-presenter');
+    return () => {
+      channelRef.current?.close();
+    };
+  }, []);
+
+  const handlePlay = () => {
+    const presentUrl = `/analyzer/present?fileUrl=${encodeURIComponent(fileUrl)}&username=${encodeURIComponent(username)}&filename=${encodeURIComponent(filename)}&autoplay=true`;
+
+    if (!presentWindowRef.current || presentWindowRef.current.closed) {
+      presentWindowRef.current = window.open(presentUrl, 'pdf-presentation');
+    } else {
+      presentWindowRef.current.focus();
+      channelRef.current?.postMessage({ type: 'play' });
+    }
+
+    setIsPlaying(true);
+  };
+
+  const handlePause = () => {
+    channelRef.current?.postMessage({ type: 'pause' });
+    setIsPlaying(false);
+  };
+
+  const handlePrev = () => {
+    channelRef.current?.postMessage({ type: 'prev' });
+  };
+
+  const handleNext = () => {
+    channelRef.current?.postMessage({ type: 'next' });
+  };
+
+  const projectName = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-indigo-950 to-black flex items-center justify-center overflow-hidden relative">
 
@@ -20,14 +65,33 @@ const SlidesContent = () => {
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse inline-block" />
             Presentation Controls
           </div>
-          <p className="text-slate-500 text-xs tracking-widest uppercase font-medium">Use the controls below to navigate</p>
+          {projectName && (
+            <p className="text-slate-300 text-sm font-semibold tracking-wide capitalize mt-1">{projectName}</p>
+          )}
+          <p className="text-slate-500 text-xs tracking-widest uppercase font-medium">
+            {username && <span className="text-indigo-400/70 mr-2">{username}</span>}
+            Use the controls below to navigate
+          </p>
+        </div>
+
+        {/* Status indicator */}
+        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${
+          isPlaying
+            ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'
+            : 'bg-slate-800/60 border border-slate-700/50 text-slate-500'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+          {isPlaying ? 'Presenting' : 'Standby'}
         </div>
 
         {/* Buttons */}
         <div className="flex items-center gap-5">
 
           {/* Left Arrow */}
-          <button className="group relative w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-500/80 transition-all duration-200 active:scale-95 shadow-lg shadow-black/30 backdrop-blur-sm">
+          <button
+            onClick={handlePrev}
+            className="group relative w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-500/80 transition-all duration-200 active:scale-95 shadow-lg shadow-black/30 backdrop-blur-sm"
+          >
             <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-br from-slate-700/20 to-transparent" />
             <svg className="w-6 h-6 text-slate-300 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
@@ -35,7 +99,10 @@ const SlidesContent = () => {
           </button>
 
           {/* Play */}
-          <button className="group relative w-20 h-20 rounded-3xl flex items-center justify-center bg-gradient-to-br from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 border border-indigo-400/30 transition-all duration-200 active:scale-95 shadow-2xl shadow-indigo-600/30">
+          <button
+            onClick={handlePlay}
+            className="group relative w-20 h-20 rounded-3xl flex items-center justify-center bg-linear-to-br from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 border border-indigo-400/30 transition-all duration-200 active:scale-95 shadow-2xl shadow-indigo-600/30"
+          >
             <div className="absolute inset-0 rounded-3xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             <div className="absolute -inset-1 rounded-[1.75rem] bg-gradient-to-br from-indigo-500/20 to-blue-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <svg className="relative w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
@@ -44,7 +111,10 @@ const SlidesContent = () => {
           </button>
 
           {/* Pause */}
-          <button className="group relative w-20 h-20 rounded-3xl flex items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 border border-slate-600/50 hover:border-slate-500/70 transition-all duration-200 active:scale-95 shadow-2xl shadow-black/30">
+          <button
+            onClick={handlePause}
+            className="group relative w-20 h-20 rounded-3xl flex items-center justify-center bg-linear-to-br from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 border border-slate-600/50 hover:border-slate-500/70 transition-all duration-200 active:scale-95 shadow-2xl shadow-black/30"
+          >
             <div className="absolute inset-0 rounded-3xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             <svg className="relative w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
@@ -52,7 +122,10 @@ const SlidesContent = () => {
           </button>
 
           {/* Right Arrow */}
-          <button className="group relative w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-500/80 transition-all duration-200 active:scale-95 shadow-lg shadow-black/30 backdrop-blur-sm">
+          <button
+            onClick={handleNext}
+            className="group relative w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-slate-500/80 transition-all duration-200 active:scale-95 shadow-lg shadow-black/30 backdrop-blur-sm"
+          >
             <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-br from-slate-700/20 to-transparent" />
             <svg className="w-6 h-6 text-slate-300 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
