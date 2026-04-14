@@ -1,20 +1,36 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 const CreateAnalyzerContent = () => {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const userName = searchParams.get('username') || 'Valued User';
   const filename = searchParams.get('filename') || 'document.pdf';
   const fileUrl = searchParams.get('fileUrl');
   const correctPassword = searchParams.get('password');
-  
+
+  const router = useRouter();
   const [isVerified, setIsVerified] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const channelRef = useRef<BroadcastChannel | null>(null);
+
+  // Listen for control messages from slides page
+  useEffect(() => {
+    try {
+      channelRef.current = new BroadcastChannel('pdf-slides-control');
+      channelRef.current.onmessage = (event) => {
+        const { type } = event.data;
+        if (type === 'play') {
+          const params = new URLSearchParams({ part: '1', ...(fileUrl ? { fileUrl } : {}), username: userName, filename });
+          router.push(`/analyzer/view?${params.toString()}`);
+        }
+      };
+    } catch (e) {}
+    return () => { channelRef.current?.close(); };
+  }, [correctPassword, fileUrl, userName, filename, router]);
 
   const handleOpenPDF = (inputPassword?: string) => {
     const passwordToVerify = inputPassword !== undefined ? inputPassword : password;
@@ -106,10 +122,8 @@ const CreateAnalyzerContent = () => {
                   </div>
                   
                   {/* Link 1: Part 01 */}
-                  <a 
-                    href={`/analyzer/view?fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}&part=1`}
-                    target="_blank"
-                    className="flex items-center justify-between p-5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 hover:border-indigo-500/40 rounded-2xl transition-all group"
+                  <div
+                    className="flex items-center justify-between p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl"
                   >
                     <div className="flex items-center space-x-4">
                       <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white font-black text-xs">01</div>
@@ -118,16 +132,14 @@ const CreateAnalyzerContent = () => {
                         <p className="text-[10px] text-indigo-400/70 font-bold uppercase tracking-widest mt-0.5">Key Markers : Entry & Exit</p>
                       </div>
                     </div>
-                    <svg className="w-5 h-5 text-indigo-400 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
-                  </a>
+                  </div>
 
                   {/* Link 2: Part 02 */}
-                  <a 
-                    href={`/analyzer/view?fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}&part=2`}
-                    target="_blank"
-                    className="flex items-center justify-between p-5 bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700/50 hover:border-slate-600/80 rounded-2xl transition-all group"
+                  <div
+                    className="flex items-center justify-between p-5 bg-slate-800/40 border border-slate-700/50 rounded-2xl"
                   >
                     <div className="flex items-center space-x-4">
                       <div className="w-10 h-10 bg-slate-700 rounded-xl flex items-center justify-center text-white font-black text-xs">02</div>
@@ -136,15 +148,15 @@ const CreateAnalyzerContent = () => {
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Core Content Analysis</p>
                       </div>
                     </div>
-                    <svg className="w-5 h-5 text-slate-500 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
-                  </a>
+                  </div>
 
                   {/* Next Button */}
                   <div className="pt-2">
                     <button
-                      onClick={() => window.open(`/analyzer/slides?fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}`, '_blank')}
+                      onClick={() => window.open(`/analyzer/slides?fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}${correctPassword ? `&password=${encodeURIComponent(correctPassword)}` : ''}`, '_blank')}
                       className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-900/20 active:scale-[0.98] flex items-center justify-center space-x-2 group"
                     >
                       <span className="text-sm uppercase tracking-[0.2em]">NEXT</span>
