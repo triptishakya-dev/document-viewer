@@ -6,6 +6,8 @@ import { useSearchParams } from 'next/navigation';
 const SlidesContent = () => {
   const searchParams = useSearchParams();
   const filename = searchParams.get('filename') || '';
+  const fileUrl = searchParams.get('fileUrl') || '';
+  const username = searchParams.get('username') || '';
 
   const [isPlaying, setIsPlaying] = useState(false);
   const channelRef = useRef<BroadcastChannel | null>(null);
@@ -32,7 +34,7 @@ const SlidesContent = () => {
   };
 
   const handleNext = () => {
-    channelRef.current?.postMessage({ type: 'next' });
+    window.open(`/analyzer/view?part=2&fileUrl=${encodeURIComponent(fileUrl)}&username=${encodeURIComponent(username)}&filename=${encodeURIComponent(filename)}`, '_blank');
   };
 
   const projectName = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
