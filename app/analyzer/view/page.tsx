@@ -82,7 +82,7 @@ const AnalyzerViewContent = () => {
       </header>
 
       {/* Main Container - Focused View */}
-      <main className="flex-1 overflow-y-auto bg-[#05050a] scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+      <main className="flex-1 overflow-y-auto bg-[#05050a] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="max-w-4xl mx-auto py-12 px-6">
           
           {/* PART 1: BEGINNING & END */}
