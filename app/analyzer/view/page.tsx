@@ -63,7 +63,7 @@ const AnalyzerViewContent = () => {
   const part = searchParams.get('part');
 
   return (
-    <div className="min-h-screen bg-[#020205] text-white font-sans overflow-hidden flex flex-col">
+    <div className="h-screen bg-[#020205] text-white font-sans overflow-hidden flex flex-col">
       {/* Dynamic Header */}
       <header className="h-14 border-b border-white/5 bg-black/40 backdrop-blur-xl flex items-center px-8 shrink-0 z-50">
         <div className="flex items-center space-x-3">
@@ -130,6 +130,12 @@ const AnalyzerViewContent = () => {
               </div>
 
               <div className="space-y-16">
+                {!pdfDoc && !error && (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                    <div className="w-8 h-8 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                  </div>
+                )}
+
                 {middlePages.length > 0 ? (
                   middlePages.map(pageNum => (
                     <div key={pageNum} className="space-y-6 max-w-2xl mx-auto">
