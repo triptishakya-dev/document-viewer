@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import PDFCanvasPage from '@/components/PDFCanvasPage';
 
@@ -12,24 +12,10 @@ const AnalyzerViewContent = () => {
   
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!(window as any).pdfjsLib) {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      script.async = true;
-      script.onload = () => {
-        const lib = (window as any).pdfjsLib;
-        lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        loadDocument(lib);
-      };
-      document.head.appendChild(script);
-    } else {
-      loadDocument((window as any).pdfjsLib);
-    }
-
     const loadDocument = (lib: any) => {
       if (fileUrl) {
         lib.getDocument(fileUrl).promise.then((pdf: any) => {
@@ -43,6 +29,20 @@ const AnalyzerViewContent = () => {
         });
       }
     };
+
+    if (!(window as any).pdfjsLib) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.async = true;
+      script.onload = () => {
+        const lib = (window as any).pdfjsLib;
+        lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        loadDocument(lib);
+      };
+      document.head.appendChild(script);
+    } else {
+      loadDocument((window as any).pdfjsLib);
+    }
   }, [fileUrl]);
 
   if (!fileUrl) {
@@ -135,7 +135,7 @@ const AnalyzerViewContent = () => {
                     <div key={pageNum} className="space-y-6 max-w-2xl mx-auto">
                       <div className="flex items-center space-x-4 opacity-30">
                         <span className="text-[9px] font-mono text-slate-400">BLOCK_{pageNum.toString().padStart(2, '0')}</span>
-                        <div className="h-[1px] flex-1 bg-slate-800"></div>
+                        <div className="h-px flex-1 bg-slate-800"></div>
                       </div>
                       <div className="shadow-2xl shadow-black/50 rounded-2xl overflow-hidden">
                         <PDFCanvasPage pdfDoc={pdfDoc} pageNumber={pageNum} />
@@ -143,7 +143,7 @@ const AnalyzerViewContent = () => {
                     </div>
                   ))
                 ) : numPages !== null ? (
-                  <div className="h-[40vh] flex items-center justify-center border border-white/5 bg-white/[0.01] rounded-[2rem] p-12">
+                  <div className="h-[40vh] flex items-center justify-center border border-white/5 bg-white/1 rounded-4xl p-12">
                     <div className="text-center space-y-4">
                       <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-6">
                         <svg className="w-6 h-6 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
