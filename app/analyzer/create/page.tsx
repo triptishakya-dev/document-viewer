@@ -26,6 +26,9 @@ const CreateAnalyzerContent = () => {
         if (type === 'play') {
           const params = new URLSearchParams({ part: '1', ...(fileUrl ? { fileUrl } : {}), username: userName, filename });
           router.push(`/analyzer/view?${params.toString()}`);
+        } else if (type === 'next') {
+          const params = new URLSearchParams({ part: '2', ...(fileUrl ? { fileUrl } : {}), username: userName, filename });
+          router.push(`/analyzer/view?${params.toString()}`);
         }
       };
     } catch (e) {}
