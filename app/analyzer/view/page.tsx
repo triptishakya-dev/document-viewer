@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import PDFCanvasPage from '@/components/PDFCanvasPage';
 
@@ -15,6 +15,23 @@ const AnalyzerViewContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const channelRef = useRef<BroadcastChannel | null>(null);
+  const numPagesRef = useRef<number | null>(null);
+
+  useEffect(() => { numPagesRef.current = numPages; }, [numPages]);
+
+  // Listen to slides controller — open once, use ref for numPages
+  useEffect(() => {
+    try {
+      channelRef.current = new BroadcastChannel('pdf-slides-control');
+      channelRef.current.onmessage = (event) => {
+        const { type } = event.data;
+        if (type === 'next') setCurrentPage(p => (numPagesRef.current ? Math.min(numPagesRef.current, p + 1) : p));
+        if (type === 'prev') setCurrentPage(p => Math.max(1, p - 1));
+      };
+    } catch (e) {}
+    return () => { channelRef.current?.close(); };
+  }, []);
 
   useEffect(() => {
     const loadDocument = (lib: any) => {
