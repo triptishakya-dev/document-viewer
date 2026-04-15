@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const CreateAnalyzerContent = () => {
   const searchParams = useSearchParams();
@@ -10,30 +10,10 @@ const CreateAnalyzerContent = () => {
   const fileUrl = searchParams.get('fileUrl');
   const correctPassword = searchParams.get('password');
 
-  const router = useRouter();
   const [isVerified, setIsVerified] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const channelRef = useRef<BroadcastChannel | null>(null);
-
-  // Listen for control messages from slides page
-  useEffect(() => {
-    try {
-      channelRef.current = new BroadcastChannel('pdf-slides-control');
-      channelRef.current.onmessage = (event) => {
-        const { type } = event.data;
-        if (type === 'play') {
-          const params = new URLSearchParams({ part: '1', ...(fileUrl ? { fileUrl } : {}), username: userName, filename });
-          router.push(`/analyzer/view?${params.toString()}`);
-        } else if (type === 'next') {
-          const params = new URLSearchParams({ part: '2', ...(fileUrl ? { fileUrl } : {}), username: userName, filename });
-          router.push(`/analyzer/view?${params.toString()}`);
-        }
-      };
-    } catch (e) {}
-    return () => { channelRef.current?.close(); };
-  }, [correctPassword, fileUrl, userName, filename, router]);
 
   const handleOpenPDF = (inputPassword?: string) => {
     const passwordToVerify = inputPassword !== undefined ? inputPassword : password;
@@ -118,56 +98,39 @@ const CreateAnalyzerContent = () => {
                   </svg>
                 </button>
               ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2 px-2 pb-2">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest">Access Links Generated</span>
-                  </div>
-                  
-                  {/* Link 1: Part 01 */}
-                  <div
-                    className="flex items-center justify-between p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white font-black text-xs">01</div>
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-white tracking-tight">Access Part 01</p>
-                        <p className="text-[10px] text-indigo-400/70 font-bold uppercase tracking-widest mt-0.5">Key Markers : Entry & Exit</p>
-                      </div>
-                    </div>
-                    <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </div>
-
-                  {/* Link 2: Part 02 */}
-                  <div
-                    className="flex items-center justify-between p-5 bg-slate-800/40 border border-slate-700/50 rounded-2xl"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-slate-700 rounded-xl flex items-center justify-center text-white font-black text-xs">02</div>
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-white tracking-tight">Access Part 02</p>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Core Content Analysis</p>
-                      </div>
-                    </div>
-                    <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </div>
-
-                  {/* Next Button */}
-                  <div className="pt-2">
-                    <button
-                      onClick={() => window.open(`/analyzer/slides?fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}${correctPassword ? `&password=${encodeURIComponent(correctPassword)}` : ''}`, '_blank')}
-                      className="w-full py-4 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-emerald-900/20 active:scale-[0.98] flex items-center justify-center space-x-2 group"
-                    >
-                      <span className="text-sm uppercase tracking-[0.2em]">NEXT</span>
-                      <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </button>
-                  </div>
+                <div className="space-y-3 pt-2">
+                  {(() => {
+                    const base = `fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}${correctPassword ? `&password=${encodeURIComponent(correctPassword)}` : ''}`;
+                    return (
+                      <>
+                        <a
+                          href={`/analyzer/view?part=1&${base}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-4 px-6 bg-linear-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg active:scale-[0.98] flex items-center justify-center space-x-2"
+                        >
+                          <span className="text-sm uppercase tracking-[0.2em]">First &amp; Last Page</span>
+                        </a>
+                        <a
+                          href={`/analyzer/view?part=2&${base}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-4 px-6 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg active:scale-[0.98] flex items-center justify-center space-x-2"
+                        >
+                          <span className="text-sm uppercase tracking-[0.2em]">Remaining Pages</span>
+                        </a>
+                        <button
+                          onClick={() => window.open(`/analyzer/slides?fileUrl=${encodeURIComponent(fileUrl || '')}&username=${encodeURIComponent(userName)}&filename=${encodeURIComponent(filename)}${correctPassword ? `&password=${encodeURIComponent(correctPassword)}` : ''}`, '_blank')}
+                          className="w-full py-4 px-6 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-all duration-300 active:scale-[0.98] flex items-center justify-center space-x-2 group"
+                        >
+                          <span className="text-sm uppercase tracking-[0.2em]">Next</span>
+                          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
