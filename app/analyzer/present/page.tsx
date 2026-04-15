@@ -4,55 +4,27 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import PDFCanvasPage from '@/components/PDFCanvasPage';
 
-interface ProjectNameCardProps {
-  projectName: string;
-  username: string;
-  label: string;
-  onClick: () => void;
-}
-
-const ProjectNameCard = ({ projectName, username, label, onClick }: ProjectNameCardProps) => (
-  <button
-    onClick={onClick}
-    className="group w-full flex-1 flex flex-col items-center justify-center gap-6 hover:bg-white/2 transition-all duration-300 active:scale-[0.99]"
-  >
-    <div className="w-20 h-20 bg-indigo-600/20 border border-indigo-500/20 rounded-3xl flex items-center justify-center group-hover:bg-indigo-600/30 group-hover:border-indigo-500/40 transition-all duration-300">
-      <svg className="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    </div>
-    <div className="flex flex-col items-center gap-2">
-      <h2 className="text-3xl font-black text-white capitalize tracking-tight text-center px-8">
-        {projectName || 'Document'}
-      </h2>
-      {username && (
-        <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">{username}</p>
-      )}
-      <p className="text-[10px] text-slate-600 uppercase tracking-[0.3em] font-bold mt-2 group-hover:text-indigo-400/60 transition-colors duration-300">
-        {label}
-      </p>
-    </div>
-  </button>
-);
-
 const PresentContent = () => {
   const searchParams = useSearchParams();
   const fileUrl = searchParams.get('fileUrl') || '';
-  const username = searchParams.get('username') || '';
-  const filename = searchParams.get('filename') || '';
 
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [numPages, setNumPages] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-  const [leftOpen, setLeftOpen] = useState(false);
-  const [rightOpen, setRightOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const channelRef = useRef<BroadcastChannel | null>(null);
 
-  const projectName = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+  // Part 1: first + last
+  const firstPage = numPages >= 1 ? 1 : null;
+  const lastPage = numPages >= 2 ? numPages : null;
 
-  // Load PDF via pdf.js — guard against duplicate script injection
+  // Part 2: middle pages 2…numPages-1
+  const middlePages = numPages >= 3
+    ? Array.from({ length: numPages - 2 }, (_, i) => i + 2)
+    : [];
+
+  // Load PDF
   useEffect(() => {
     if (!fileUrl) return;
 
@@ -61,23 +33,16 @@ const PresentContent = () => {
         .then((pdf: any) => {
           setPdfDoc(pdf);
           setNumPages(pdf.numPages);
+          setIsLoading(false);
         })
-        .catch((err: any) => console.error('PDF load error:', err));
+        .catch(() => {
+          setError('Failed to load PDF.');
+          setIsLoading(false);
+        });
     };
 
-    const lib = (window as any).pdfjsLib;
-    if (lib) {
-      loadPDF(lib);
-      return;
-    }
-
-    // Avoid injecting the script more than once
-    const existing = document.querySelector('script[data-pdfjs]');
-    if (existing) {
-      existing.addEventListener('load', () => {
-        const l = (window as any).pdfjsLib;
-        if (l) loadPDF(l);
-      });
+    if ((window as any).pdfjsLib) {
+      loadPDF((window as any).pdfjsLib);
       return;
     }
 
@@ -86,10 +51,10 @@ const PresentContent = () => {
     script.async = true;
     script.setAttribute('data-pdfjs', '1');
     script.onload = () => {
-      const l = (window as any).pdfjsLib;
-      l.GlobalWorkerOptions.workerSrc =
+      const lib = (window as any).pdfjsLib;
+      lib.GlobalWorkerOptions.workerSrc =
         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      loadPDF(l);
+      loadPDF(lib);
     };
     document.head.appendChild(script);
   }, [fileUrl]);
@@ -98,145 +63,131 @@ const PresentContent = () => {
   useEffect(() => {
     try {
       channelRef.current = new BroadcastChannel('pdf-presenter');
-      channelRef.current.onmessage = (event) => {
-        const { type } = event.data;
-        if (type === 'play') setIsPaused(false);
-        else if (type === 'pause') setIsPaused(true);
-      };
-    } catch (e) {
-      console.warn('BroadcastChannel not available', e);
-    }
+    } catch (e) {}
     return () => { channelRef.current?.close(); };
   }, []);
 
-  const firstPage = numPages >= 1 ? 1 : null;
-  const lastPage = numPages >= 2 ? numPages : null;
-  const middlePages = numPages >= 3
-    ? Array.from({ length: numPages - 2 }, (_, i) => i + 2)
-    : [];
+  // Spinner shown while loading
+  const Spinner = () => (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+    </div>
+  );
 
   return (
     <div className="flex h-screen bg-[#020205] text-white font-sans overflow-hidden">
 
-      {/* LEFT SCREEN */}
-      <div className="w-1/2 flex flex-col border-r border-white/6 overflow-y-auto">
-        {!leftOpen ? (
-          <div className="flex-1 flex">
-            <ProjectNameCard
-              projectName={projectName}
-              username={username}
-              label="Click to view first & last page"
-              onClick={() => setLeftOpen(true)}
-            />
-          </div>
-        ) : (
-          <>
-            <div className="shrink-0 h-12 flex items-center px-5 gap-3 border-b border-white/5 bg-black/40 backdrop-blur-xl">
-              <button onClick={() => setLeftOpen(false)} className="text-slate-600 hover:text-slate-300 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">First &amp; Last Page</p>
-            </div>
-            <div className="flex flex-col gap-6 p-5">
-              {pdfDoc ? (
-                <>
-                  {firstPage !== null && (
-                    <div className="space-y-2">
-                      <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">
-                        Page {String(firstPage).padStart(2, '0')} — First
-                      </p>
-                      <div className="rounded-xl overflow-hidden shadow-2xl shadow-black/60">
-                        <PDFCanvasPage pdfDoc={pdfDoc} pageNumber={firstPage} scale={1.5} />
-                      </div>
-                    </div>
-                  )}
-                  {lastPage !== null && lastPage !== firstPage && (
-                    <div className="space-y-2">
-                      <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">
-                        Page {String(lastPage).padStart(2, '0')} — Last
-                      </p>
-                      <div className="rounded-xl overflow-hidden shadow-2xl shadow-black/60">
-                        <PDFCanvasPage pdfDoc={pdfDoc} pageNumber={lastPage} scale={1.5} />
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center justify-center py-32">
-                  <div className="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+      {/* ══════════════════════════════════════
+          LEFT HALF — Part 01: First + Last page
+         ══════════════════════════════════════ */}
+      <div className="w-1/2 flex flex-col border-r border-white/5 overflow-hidden">
 
-      {/* RIGHT SCREEN */}
-      <div className="w-1/2 flex flex-col overflow-y-auto">
-        {!rightOpen ? (
-          <div className="flex-1 flex">
-            <ProjectNameCard
-              projectName={projectName}
-              username={username}
-              label="Click to view remaining pages"
-              onClick={() => setRightOpen(true)}
-            />
+        {/* header */}
+        <div className="shrink-0 h-12 flex items-center px-5 gap-3 border-b border-white/5 bg-black/50 backdrop-blur-xl">
+          <div className="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center text-[9px] font-black text-white">01</div>
+          <div>
+            <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">Access Part 01</p>
+            <p className="text-[8px] text-slate-600 uppercase tracking-widest">Key Markers · First &amp; Last Page</p>
           </div>
-        ) : (
-          <>
-            <div className="shrink-0 h-12 flex items-center px-5 gap-3 border-b border-white/5 bg-black/40 backdrop-blur-xl">
-              <button onClick={() => setRightOpen(false)} className="text-slate-600 hover:text-slate-300 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <p className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">
-                Remaining Pages{middlePages.length > 0 ? ` (${middlePages.length})` : ''}
-              </p>
-            </div>
-            <div className="p-5">
-              {pdfDoc ? (
-                middlePages.length > 0 ? (
-                  <div className="flex flex-col gap-8">
-                    {middlePages.map((pageNum) => (
-                      <div key={pageNum} className="space-y-2">
-                        <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">
-                          Page {String(pageNum).padStart(2, '0')}
-                        </p>
-                        <div className="rounded-xl overflow-hidden shadow-2xl shadow-black/60">
-                          <PDFCanvasPage pdfDoc={pdfDoc} pageNumber={pageNum} scale={1.5} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-32">
-                    <p className="text-[10px] text-slate-700 uppercase tracking-widest font-bold">No middle pages</p>
-                  </div>
-                )
-              ) : (
-                <div className="flex items-center justify-center py-32">
-                  <div className="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
+          {numPages > 0 && (
+            <span className="ml-auto text-[9px] text-slate-700 font-bold">2 pages</span>
+          )}
+        </div>
 
-      {/* Pause overlay */}
-      {isPaused && (
-        <div className="fixed inset-0 z-40 pointer-events-none flex items-center justify-center">
-          <div className="bg-black/70 backdrop-blur-sm rounded-3xl px-10 py-8 border border-amber-500/20 flex flex-col items-center gap-3 shadow-2xl">
-            <svg className="w-10 h-10 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-            </svg>
-            <p className="text-xs font-black text-amber-400 uppercase tracking-[0.4em]">Paused</p>
+        {/* content */}
+        <div className="flex-1 overflow-y-auto bg-[#05050a] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="p-5 flex flex-col gap-6">
+
+            {isLoading && <Spinner />}
+            {error && (
+              <div className="flex items-center justify-center py-20">
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+
+            {pdfDoc && (
+              <>
+                {/* First page */}
+                {firstPage !== null && (
+                  <div className="space-y-2">
+                    <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">
+                      Page 01 — First
+                    </p>
+                    <div className="rounded-xl overflow-hidden shadow-2xl shadow-black/60">
+                      <PDFCanvasPage pdfDoc={pdfDoc} pageNumber={firstPage} scale={1.5} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Last page */}
+                {lastPage !== null && lastPage !== firstPage && (
+                  <div className="space-y-2">
+                    <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">
+                      Page {String(lastPage).padStart(2, '0')} — Last
+                    </p>
+                    <div className="rounded-xl overflow-hidden shadow-2xl shadow-black/60">
+                      <PDFCanvasPage pdfDoc={pdfDoc} pageNumber={lastPage} scale={1.5} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Single-page document */}
+                {numPages === 1 && (
+                  <p className="text-[10px] text-slate-600 text-center py-4">Single page document.</p>
+                )}
+              </>
+            )}
           </div>
         </div>
-      )}
+      </div>
+
+      {/* ══════════════════════════════════════
+          RIGHT HALF — Part 02: Remaining pages (page by page)
+         ══════════════════════════════════════ */}
+      <div className="w-1/2 flex flex-col overflow-hidden">
+
+        {/* header */}
+        <div className="shrink-0 h-12 flex items-center px-5 gap-3 border-b border-white/5 bg-black/50 backdrop-blur-xl">
+          <div className="w-6 h-6 bg-slate-700 rounded-lg flex items-center justify-center text-[9px] font-black text-white">02</div>
+          <div>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Access Part 02</p>
+            <p className="text-[8px] text-slate-600 uppercase tracking-widest">Core Content · Remaining Pages</p>
+          </div>
+          {middlePages.length > 0 && (
+            <span className="ml-auto text-[9px] text-slate-700 font-bold">{middlePages.length} pages</span>
+          )}
+        </div>
+
+        {/* content */}
+        <div className="flex-1 overflow-y-auto bg-[#040409] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="p-5 flex flex-col gap-5">
+
+            {isLoading && <Spinner />}
+
+            {!isLoading && !error && middlePages.length === 0 && numPages > 0 && (
+              <div className="flex items-center justify-center py-20">
+                <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">No middle pages in this document</p>
+              </div>
+            )}
+
+            {pdfDoc && middlePages.length > 0 && (
+              <div className="flex flex-col gap-6">
+                {middlePages.map((pageNum) => (
+                  <div key={pageNum} className="space-y-2">
+                    <p className="text-[8px] font-mono text-slate-700 uppercase tracking-widest">
+                      Page {String(pageNum).padStart(2, '0')}
+                    </p>
+                    <div className="rounded-xl overflow-hidden shadow-2xl shadow-black/60">
+                      <PDFCanvasPage pdfDoc={pdfDoc} pageNumber={pageNum} scale={1.5} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </div>
+        </div>
+      </div>
 
     </div>
   );
