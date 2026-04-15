@@ -20,6 +20,9 @@ const SlidesContent = () => {
   }, []);
 
   const handlePlay = () => {
+    const base = new URLSearchParams({ fileUrl, username, filename });
+    window.open(`/analyzer/view?part=all&${base.toString()}`, '_blank');
+    channelRef.current?.postMessage({ type: 'goto', index: 0 });
     channelRef.current?.postMessage({ type: 'play' });
     setIsPlaying(true);
   };
