@@ -93,32 +93,34 @@ const AnalyzerViewContent = () => {
     <div className="min-h-screen bg-[#020205] text-white font-sans flex flex-col">
 
       {/* Header */}
-      <header className="h-14 shrink-0 border-b border-white/5 bg-black/40 backdrop-blur-xl flex items-center px-8 z-50 sticky top-0">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+      <header className="shrink-0 border-b border-white/5 bg-black/40 backdrop-blur-xl z-50 sticky top-0 px-4">
+        <div className="max-w-[700px] mx-auto h-14 flex items-center">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-white/90 truncate max-w-64">{filename}</span>
+              <span className="text-[10px] text-slate-600 font-medium">{totalPages > 0 ? `${totalPages} total pages` : ''}</span>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-bold text-white/90 truncate max-w-64">{filename}</span>
-            <span className="text-[10px] text-slate-600 font-medium">{totalPages > 0 ? `${totalPages} total pages` : ''}</span>
+          <div className="ml-auto flex items-center gap-4">
+            <span className={`text-[10px] uppercase tracking-[0.2em] font-black px-3 py-1 rounded-full border ${
+              part === '1'
+                ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                : part === '2'
+                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                : 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+            }`}>
+              {partLabel}
+            </span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+              {userName}
+            </span>
           </div>
-        </div>
-        <div className="ml-auto flex items-center gap-4">
-          <span className={`text-[10px] uppercase tracking-[0.2em] font-black px-3 py-1 rounded-full border ${
-            part === '1'
-              ? 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
-              : part === '2'
-              ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-              : 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
-          }`}>
-            {partLabel}
-          </span>
-          <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-            {userName}
-          </span>
         </div>
       </header>
 
