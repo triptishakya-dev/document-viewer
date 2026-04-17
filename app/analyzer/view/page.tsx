@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import PDFCanvasPage from '@/components/PDFCanvasPage';
 
@@ -26,6 +26,46 @@ const AnalyzerViewContent = () => {
   const [allowedPages, setAllowedPages] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Synchronization state
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Listen for broadcast messages from slides controller
+  useEffect(() => {
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('pdf-slides-control');
+      channel.onmessage = (event) => {
+        const { type, index } = event.data;
+        if (type === 'next') {
+          setCurrentPageIndex(prev => Math.min(prev + 1, allowedPages.length - 1));
+        } else if (type === 'prev') {
+          setCurrentPageIndex(prev => Math.max(prev - 1, 0));
+        } else if (type === 'goto') {
+          if (typeof index === 'number') {
+            setCurrentPageIndex(Math.min(Math.max(index, 0), allowedPages.length - 1));
+          }
+        } else if (type === 'play') {
+          setCurrentPageIndex(0);
+        }
+      };
+    } catch (e) {}
+
+    return () => {
+      channel?.close();
+    };
+  }, [allowedPages.length]);
+
+  // Smooth scroll to current page when index changes
+  useEffect(() => {
+    if (pageRefs.current[currentPageIndex]) {
+      pageRefs.current[currentPageIndex]?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+  }, [currentPageIndex]);
 
   // Build the page list based on part
   useEffect(() => {
@@ -167,7 +207,11 @@ const AnalyzerViewContent = () => {
             {/* Page cards */}
             <div className="flex flex-col items-center gap-10">
               {allowedPages.map((pageNum, idx) => (
-                <div key={pageNum} className="w-full max-w-[700px]">
+                <div 
+                  key={pageNum} 
+                  ref={el => { pageRefs.current[idx] = el; }}
+                  className="w-full max-w-[700px]"
+                >
                   {/* Page label */}
                   <div className="flex items-center justify-between mb-3 px-1">
                     <p className="text-[9px] font-mono text-slate-600 uppercase tracking-widest">
