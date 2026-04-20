@@ -45,10 +45,12 @@ const DocumentSubmissionPortal = ({ id, userName, password }: DocumentSubmission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Upload the PDF to the server
+    if (!file) return;
+    const currentFile = file;
     let fileUrl = '';
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', currentFile);
       
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -67,7 +69,7 @@ const DocumentSubmissionPortal = ({ id, userName, password }: DocumentSubmission
     }
 
     // Open the project creation page in a new tab
-    const url = `/analyzer/create?filename=${encodeURIComponent(file.name)}&username=${encodeURIComponent(userName || '')}&fileUrl=${encodeURIComponent(fileUrl)}&password=${encodeURIComponent(password || '')}`;
+    const url = `/analyzer/create?filename=${encodeURIComponent(currentFile.name)}&username=${encodeURIComponent(userName || '')}&fileUrl=${encodeURIComponent(fileUrl)}&password=${encodeURIComponent(password || '')}`;
     window.open(url, '_blank');
 
     setIsSubmitting(true);
